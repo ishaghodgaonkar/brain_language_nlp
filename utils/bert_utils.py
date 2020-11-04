@@ -4,17 +4,24 @@ from pytorch_pretrained_bert import BertTokenizer, BertModel
 import time as tm
 
 def get_bert_layer_representations(seq_len, text_array, remove_chars, word_ind_to_extract):
-
     model = BertModel.from_pretrained('bert-base-uncased')
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     model.eval()
+    config = model.config
+    print(config)
 
     # get the token embeddings
     token_embeddings = []
     for word in text_array:
         current_token_embedding = get_bert_token_embeddings([word], tokenizer, model, remove_chars)
+        # print(current_token_embedding)
+        # print(type(current_token_embedding.shape))
+        # print(current_token_embedding.shape)
+        # exit()
         token_embeddings.append(np.mean(current_token_embedding.detach().numpy(), 1))
-    
+
+
+
     # where to store layer-wise bert embeddings of particular length
     BERT = {}
     for layer in range(12):
@@ -89,7 +96,6 @@ def predict_bert_embeddings(words_in_array, tokenizer, model, remove_chars):
     # convert token to vocabulary indices
     indexed_tokens = tokenizer.convert_tokens_to_ids(seq_tokens)
     tokens_tensor = torch.tensor([indexed_tokens])
-    
     encoded_layers, _ = model(tokens_tensor)
     pooled_output = np.squeeze(model.pooler(encoded_layers[-1]).detach().numpy())
     

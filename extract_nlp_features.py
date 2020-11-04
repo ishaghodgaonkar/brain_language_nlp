@@ -1,7 +1,8 @@
 from utils.bert_utils import get_bert_layer_representations
 from utils.xl_utils import get_xl_layer_representations
-from utils.elmo_utils import get_elmo_layer_representations
+# from utils.elmo_utils import get_elmo_layer_representations
 from utils.use_utils import get_use_layer_representations
+from utils.xl_net_utils import get_xl_net_layer_representations
 
 import time as tm
 import numpy as np
@@ -17,7 +18,7 @@ def save_layer_representations(model_layer_dict, model_name, seq_len, save_dir):
     return 1
 
                 
-model_options = ['bert','transformer_xl','elmo','use']        
+model_options = ['bert','transformer_xl','elmo','use', 'xl_net']
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -45,11 +46,16 @@ if __name__ == '__main__':
         nlp_features = get_elmo_layer_representations(args.sequence_length, text_array, remove_chars, word_ind_to_extract)
     elif args.nlp_model == 'use':
         nlp_features = get_use_layer_representations(args.sequence_length, text_array, remove_chars)
+
+    elif args.nlp_model == 'xl_net':
+        word_ind_to_extract = -1
+        nlp_features = get_xl_net_layer_representations(args.sequence_length, text_array, remove_chars, word_ind_to_extract)
+
     else:
         print('Unrecognized model name {}'.format(args.nlp_model))
         
         
-    if not os.path.exists(args.output_dir):
+    if not os.path.exists(arsgs.output_dir):
         os.makedirs(args.output_dir)          
               
     save_layer_representations(nlp_features, args.nlp_model, args.sequence_length, args.output_dir)

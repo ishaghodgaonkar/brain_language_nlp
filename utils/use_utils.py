@@ -1,7 +1,9 @@
 import tensorflow as tf
 import tensorflow_hub as hub
 import numpy as np
-
+import tensorflow.compat.v1 as tf
+#To make tf 2.0 compatible with tf1.0 code, we disable the tf2.0 functionalities
+tf.disable_eager_execution()
 
 def clean_word(word, remove_chars):
     word2 = word[:]
@@ -30,6 +32,10 @@ def get_use_layer_representations(seq_len, text_array, remove_chars):
         session.run([tf.global_variables_initializer(), tf.tables_initializer()])
 
         embeddings = session.run(embed(seq_strings))
+
+        print(embeddings)
+        print(type(embeddings.shape))
+        print(embeddings.shape)
         sequence = np.array(embeddings)
 
     USE = {}

@@ -1,36 +1,46 @@
 import numpy as np
 import torch
 import time as tm
-
-from pytorch_transformers import TransfoXLModel, TransfoXLTokenizer, TransfoXLConfig
-
-# from pytorch_pretrained_bert import TransfoXLTokenizer, TransfoXLModel
+from pytorch_transformers import XLNetConfig, XLNetModel, XLNetTokenizer
 
 
-def get_xl_layer_representations(seq_len, text_array, remove_chars, word_ind_to_extract):
-    configuration = TransfoXLConfig()
-    model = TransfoXLModel(configuration)
-    tokenizer = TransfoXLTokenizer.from_pretrained('transfo-xl-wt103')
+def get_xl_net_layer_representations(seq_len, text_array, remove_chars, word_ind_to_extract):
+
+    configuration = XLNetConfig(mem_len=1600)
+    model = XLNetModel(configuration)
+    configuration = model.config
+    tokenizer = XLNetTokenizer.from_pretrained('xlnet-base-cased', do_lower_case=True)
     model.eval()
-    print(model.config)
+    print(configuration)
 
-    # get the token embeddings
-    token_embeddings = []
+
+    print(configuration)
+
+    # # get the token embeddings
+    # token_embeddings = []
+    # print(len(text_array))
+    # count = 0
     # for word in text_array:
-    #     current_token_embedding = get_xl_token_embeddings([word], tokenizer, model, remove_chars)
+    #     count+=1
+    #     print(count)
+    #     current_token_embedding = get_xl_net_token_embeddings([word], tokenizer, model, remove_chars)
+    #     current_token_embedding=current_token_embedding[0]
+    #     # print(current_token_embedding)
+    #     # print(current_token_embedding.shape)
     #     token_embeddings.append(np.mean(current_token_embedding.detach().numpy(), 1))
     #
-    # with open('listfile_xl.txt', 'w') as filehandle:
+    # with open('listfile.txt', 'w') as filehandle:
     #     filehandle.writelines("%s\n" % place for place in token_embeddings)
 
-    with open('listfile_xl.txt', 'r') as filehandle:
+    with open('listfile.txt', 'r') as filehandle:
         token_embeddings = [current_place.rstrip() for current_place in filehandle.readlines()]
 
     # where to store layer-wise xl embeddings of particular length
-    XL = {}
-    for layer in range(19):
-        XL[layer] = []
-    XL[-1] = token_embeddings
+
+    XL_net = {}
+    for layer in range(25):
+        XL_net[layer] = []
+    XL_net[-1] = token_embeddings
 
     if word_ind_to_extract < 0:  # the index is specified from the end of the array, so invert the index
         from_start_word_ind_to_extract = seq_len + word_ind_to_extract
@@ -41,23 +51,25 @@ def get_xl_layer_representations(seq_len, text_array, remove_chars, word_ind_to_
 
     # before we've seen enough words to make up the sequence length, add the representation for the last word 'seq_len' times
     word_seq = text_array[:seq_len]
+
     for _ in range(seq_len):
-        XL = add_avrg_token_embedding_for_specific_word(word_seq,
+        print(_)
+        XL_net = add_avrg_token_embedding_for_specific_word(word_seq,
                                                         tokenizer,
                                                         model,
                                                         remove_chars,
                                                         from_start_word_ind_to_extract,
-                                                        XL)
+                                                        XL_net)
 
     # then add the embedding of the last word in a sequence as the embedding for the sequence
     for end_curr_seq in range(seq_len, len(text_array)):
         word_seq = text_array[end_curr_seq - seq_len + 1:end_curr_seq + 1]
-        XL = add_avrg_token_embedding_for_specific_word(word_seq,
-                                                        tokenizer,
-                                                        model,
-                                                        remove_chars,
-                                                        from_start_word_ind_to_extract,
-                                                        XL)
+        XL_net = add_avrg_token_embedding_for_specific_word(word_seq,
+                                                            tokenizer,
+                                                            model,
+                                                            remove_chars,
+                                                            from_start_word_ind_to_extract,
+                                                            XL_net)
 
         if end_curr_seq % 100 == 0:
             print('Completed {} out of {}: {}'.format(end_curr_seq, len(text_array), tm.time() - start_time))
@@ -65,7 +77,7 @@ def get_xl_layer_representations(seq_len, text_array, remove_chars, word_ind_to_
 
     print('Done extracting sequences of length {}'.format(seq_len))
 
-    return XL
+    return XL_net
 
 
 def predict_xl_embeddings(words_in_array, tokenizer, model, remove_chars):
@@ -77,6 +89,7 @@ def predict_xl_embeddings(words_in_array, tokenizer, model, remove_chars):
 
     n_seq_tokens = 0
     seq_tokens = []
+
 
     word_ind_to_token_ind = {}  # dict that maps index of word in words_in_array to index of tokens in seq_tokens
 
@@ -94,14 +107,17 @@ def predict_xl_embeddings(words_in_array, tokenizer, model, remove_chars):
     tokens_tensor = torch.tensor([indexed_tokens])
 
     hidden_states, mems = model(tokens_tensor)
+    print(len(hidden_states))
+    print(len(mems))
     seq_length = hidden_states.size(1)
     lower_hidden_states = list(t[-seq_length:, ...].transpose(0, 1) for t in mems)
     all_hidden_states = lower_hidden_states + [hidden_states]
+
     return all_hidden_states, word_ind_to_token_ind
 
 
 # get the XL token embeddings
-def get_xl_token_embeddings(words_in_array, tokenizer, model, remove_chars):
+def get_xl_net_token_embeddings(words_in_array, tokenizer, model, remove_chars):
     for word in words_in_array:
         if word in remove_chars:
             print(
@@ -124,10 +140,13 @@ def get_xl_token_embeddings(words_in_array, tokenizer, model, remove_chars):
 
     # Convert token to vocabulary indices
     indexed_tokens = tokenizer.convert_tokens_to_ids(seq_tokens)
-
     # Convert inputs to PyTorch tensors
     tokens_tensor = torch.tensor([indexed_tokens])
-    token_embeddings = model.word_emb.forward(tokens_tensor)
+
+    """ CHANGED CODE """
+    token_embeddings = model.forward(tokens_tensor)
+    """ CHANGED CODE """
+
     return token_embeddings
 
 
@@ -140,9 +159,11 @@ def get_xl_token_embeddings(words_in_array, tokenizer, model, remove_chars):
 def add_avrg_token_embedding_for_specific_word(word_seq, tokenizer, model, remove_chars, from_start_word_ind_to_extract,
                                                model_dict):
     word_seq = list(word_seq)
+
     all_sequence_embeddings, word_ind_to_token_ind = predict_xl_embeddings(word_seq, tokenizer, model, remove_chars)
     token_inds_to_avrg = word_ind_to_token_ind[from_start_word_ind_to_extract]
     model_dict = add_word_xl_embedding(model_dict, all_sequence_embeddings, token_inds_to_avrg)
+
     return model_dict
 
 

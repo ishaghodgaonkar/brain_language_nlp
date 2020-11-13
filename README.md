@@ -1,3 +1,53 @@
+# ECE 570 Final Project README
+--------------------------------------------------------------------------------------------------------------------------------------------
+Part 1: Brain data prediction
+
+The changes made in the brain_language_nlp repository (in brain_language_nlp folder) were in the following files: extract_nlp_features.py and xl_net_utils.py. The changed code is a few lines (10-15) total. xl_net_utils.py is a copy of xl_utils.py which extracts features from Transformer-XL, with a few changes to run for XLNet instead.
+
+To extract features, build the encoding model, and then generate predictions for BERT for all layers for subject F, run the following command on a server which can run continuously for a day or two without being interrupted:
+```
+nohup python3 plot_graphs_paper.py
+disown
+```
+
+To do the same for XLNet:
+```
+nohup python3 plot_graphs_paper_xl_net.py
+disown
+```
+
+Then run 
+
+```
+python3 extract_nums.py
+```
+
+to get the final numbers to plot by averaging each list obtained.
+
+To then plot the graphs using these numbers:
+
+
+```
+python3 draw_plots.py
+```
+
+The final .txt files are included in the submission for convenience to run the last step and obtain the results shown in my term paper.
+
+Models were obtained from Pytorch Transformers library and data was obtained from original repository (link: https://github.com/mtoneva/brain_language_nlp)
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+Part 2: NLP task performance evaluation
+
+For the text classification + semantic analysis tasks, I built off of 2 scripts published in this article: https://towardsdatascience.com/bert-text-classification-using-pytorch-723dfb8b6b5b
+
+
+Both scripts are combined together in Text Classification BERT and XL_net and each cell is marked with "NEW CODE" or "MODIFIED CODE" where I introduced new code or modified existing code. I introduced a new dataset from Kaggle (a COVID-19 tweets dataset) and XLnet. Now both BERT and XLnet can be trained on the existing News dataset already implemented or the COVID tweets dataset. To do this, run all cells until Preliminaries, and in the first cell under Preliminaries, change the model to BERT or XLNet and the dataset to NEWS or COVID. Then run the rest of the code cells to produce the graphs.
+
+
+# END ECE 570 Final Project README
+
+
+
 # Interpreting and improving natural-language processing (in machines) with natural language-processing (in the brain)
 
 This repository contains code for the paper [Interpreting and improving natural-language processing (in machines) with natural language-processing (in the brain)](https://arxiv.org/pdf/1905.11833.pdf)

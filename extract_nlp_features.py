@@ -55,7 +55,7 @@ if __name__ == '__main__':
         print('Unrecognized model name {}'.format(args.nlp_model))
         
         
-    if not os.path.exists(arsgs.output_dir):
+    if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)          
               
     save_layer_representations(nlp_features, args.nlp_model, args.sequence_length, args.output_dir)

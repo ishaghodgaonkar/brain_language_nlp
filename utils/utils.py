@@ -52,12 +52,12 @@ def get_nlp_features_fixed_length(layer, seq_len, feat_type, feat_dir, train_ind
     if feat_type == 'elmo':
         train = loaded[SKIP_WORDS:END_WORDS,:][:,:512][train_indicator]   # only forward LSTM
         test = loaded[SKIP_WORDS:END_WORDS,:][:,:512][~train_indicator]   # only forward LSTM
-    elif feat_type == 'bert' or feat_type == 'transformer_xl' or feat_type == 'use':
+    elif feat_type == 'bert' or feat_type == 'transformer_xl' or feat_type == 'use' or feat_type == 'xl_net':
         train = loaded[SKIP_WORDS:END_WORDS,:][train_indicator]
         test = loaded[SKIP_WORDS:END_WORDS,:][~train_indicator]
     else:
         print('Unrecognized NLP feature type {}. Available options elmo, bert, transformer_xl, use'.format(feat_type))
-    
+
     pca = PCA(n_components=10, svd_solver='full')
     pca.fit(train)
     train_pca = pca.transform(train)

@@ -6,34 +6,35 @@ from pytorch_transformers import XLNetConfig, XLNetModel, XLNetTokenizer
 
 def get_xl_net_layer_representations(seq_len, text_array, remove_chars, word_ind_to_extract):
 
+    # new code --------------------------------------------------------------
     configuration = XLNetConfig(mem_len=1600)
     model = XLNetModel(configuration)
     configuration = model.config
     tokenizer = XLNetTokenizer.from_pretrained('xlnet-base-cased', do_lower_case=True)
     model.eval()
     print(configuration)
+    # new code --------------------------------------------------------------
 
+    # get the token embeddings
+    token_embeddings = []
+    print(len(text_array))
+    count = 0
+    for word in text_array:
+        count+=1
+        print(count)
+        current_token_embedding = get_xl_net_token_embeddings([word], tokenizer, model, remove_chars)
+        current_token_embedding=current_token_embedding[0]
+        # print(current_token_embedding)
+        # print(current_token_embedding.shape)
+        token_embeddings.append(np.mean(current_token_embedding.detach().numpy(), 1))
 
-    print(configuration)
+    # new code --------------------------------------------------------------
 
-    # # get the token embeddings
-    # token_embeddings = []
-    # print(len(text_array))
-    # count = 0
-    # for word in text_array:
-    #     count+=1
-    #     print(count)
-    #     current_token_embedding = get_xl_net_token_embeddings([word], tokenizer, model, remove_chars)
-    #     current_token_embedding=current_token_embedding[0]
-    #     # print(current_token_embedding)
-    #     # print(current_token_embedding.shape)
-    #     token_embeddings.append(np.mean(current_token_embedding.detach().numpy(), 1))
-    #
     # with open('listfile.txt', 'w') as filehandle:
     #     filehandle.writelines("%s\n" % place for place in token_embeddings)
-
-    with open('listfile.txt', 'r') as filehandle:
-        token_embeddings = [current_place.rstrip() for current_place in filehandle.readlines()]
+    #
+    # with open('listfile.txt', 'r') as filehandle:
+    #     token_embeddings = [current_place.rstrip() for current_place in filehandle.readlines()]
 
     # where to store layer-wise xl embeddings of particular length
 
@@ -41,6 +42,7 @@ def get_xl_net_layer_representations(seq_len, text_array, remove_chars, word_ind
     for layer in range(25):
         XL_net[layer] = []
     XL_net[-1] = token_embeddings
+    # new code --------------------------------------------------------------
 
     if word_ind_to_extract < 0:  # the index is specified from the end of the array, so invert the index
         from_start_word_ind_to_extract = seq_len + word_ind_to_extract
@@ -53,7 +55,6 @@ def get_xl_net_layer_representations(seq_len, text_array, remove_chars, word_ind
     word_seq = text_array[:seq_len]
 
     for _ in range(seq_len):
-        print(_)
         XL_net = add_avrg_token_embedding_for_specific_word(word_seq,
                                                         tokenizer,
                                                         model,
@@ -76,7 +77,7 @@ def get_xl_net_layer_representations(seq_len, text_array, remove_chars, word_ind
             start_time = tm.time()
 
     print('Done extracting sequences of length {}'.format(seq_len))
-
+    print(XL_net.shape)
     return XL_net
 
 
@@ -107,8 +108,7 @@ def predict_xl_embeddings(words_in_array, tokenizer, model, remove_chars):
     tokens_tensor = torch.tensor([indexed_tokens])
 
     hidden_states, mems = model(tokens_tensor)
-    print(len(hidden_states))
-    print(len(mems))
+
     seq_length = hidden_states.size(1)
     lower_hidden_states = list(t[-seq_length:, ...].transpose(0, 1) for t in mems)
     all_hidden_states = lower_hidden_states + [hidden_states]
@@ -143,9 +143,9 @@ def get_xl_net_token_embeddings(words_in_array, tokenizer, model, remove_chars):
     # Convert inputs to PyTorch tensors
     tokens_tensor = torch.tensor([indexed_tokens])
 
-    """ CHANGED CODE """
+    # new code --------------------------------------------------------------
     token_embeddings = model.forward(tokens_tensor)
-    """ CHANGED CODE """
+    # new code --------------------------------------------------------------
 
     return token_embeddings
 

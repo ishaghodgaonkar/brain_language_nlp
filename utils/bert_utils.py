@@ -60,7 +60,7 @@ def get_bert_layer_representations(seq_len, text_array, remove_chars, word_ind_t
             start_time = tm.time()
 
     print('Done extracting sequences of length {}'.format(seq_len))
-    
+    print(BERT.shape)
     return BERT
 
 # extracts layer representations for all words in words_in_array
